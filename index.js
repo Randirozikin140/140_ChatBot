@@ -7,7 +7,6 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
 app.use(express.json({ limit: "1mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -16,60 +15,68 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
+// Cek koneksi API
+app.get("/api/chat", (req, res) => {
+  res.json({
+    success: true,
+    message: "Chat API aktif",
+  });
+});
+
 // API Chatbot
 app.post("/api/chat", async (req, res) => {
   try {
     const messages = req.body?.message;
 
-    // Validasi format pesan
+    // Validasi pesan
     if (
       !Array.isArray(messages) ||
       messages.length === 0 ||
-      messages.length > 30
+      messages.length > 25
     ) {
       return res.status(400).json({
         success: false,
-        message: "Message harus berupa array yang valid.",
+        message: "Message harus berupa array.",
       });
     }
 
-    // Validasi setiap pesan
-    const validMessages = messages.every((item) => {
-      return (
+    // Validasi isi array
+    const valid = messages.every(
+      (item) =>
         item &&
         ["user", "assistant"].includes(item.role) &&
         typeof item.content === "string" &&
-        item.content.trim().length > 0
-      );
-    });
+        item.content.trim().length > 0 &&
+        item.content.length <= 5000,
+    );
 
-    if (!validMessages) {
+    if (!valid) {
       return res.status(400).json({
         success: false,
-        message: "Format isi pesan tidak valid.",
+        message: "Format pesan tidak valid.",
       });
     }
 
-    // Memeriksa API Key
+    // Ambil API Key
     const apiKey = process.env.OPENROUTER_API_KEY;
 
-    if (!apiKey || apiKey.includes("ISI_API_KEY")) {
+    if (!apiKey) {
       return res.status(500).json({
         success: false,
-        message: "API Key OpenRouter belum diatur di file .env.",
+        message: "API Key OpenRouter belum diatur.",
       });
     }
 
-    // Mengirim pesan ke OpenRouter
+    // Hubungkan ke OpenRouter
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
 
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,
-          "X-Title": "Chatbot AI PWS 10",
+          "Content-Type": "application/json",
+          "X-Title": "Chatbot AI",
         },
 
         body: JSON.stringify({
@@ -81,12 +88,11 @@ app.post("/api/chat", async (req, res) => {
             {
               role: "system",
               content:
-                "Kamu adalah Chatbot AI bernama Chatbot AI. " +
-                "Kamu menggunakan model NVIDIA Nemotron 3 Ultra. " +
-                "Jawablah semua pertanyaan pengguna dengan ramah, " +
-                "jelas, sopan, dan menggunakan bahasa Indonesia " +
-                "yang mudah dipahami. Berikan jawaban yang " +
-                "membantu dan sesuai dengan pertanyaan.",
+                "Kamu adalah Chatbot AI yang ramah, " +
+                "cerdas, dan membantu. " +
+                "Gunakan bahasa Indonesia yang mudah " +
+                "dipahami. Jawablah pertanyaan secara " +
+                "jelas, sopan, dan informatif.",
             },
             ...messages,
           ],
@@ -98,19 +104,16 @@ app.post("/api/chat", async (req, res) => {
       },
     );
 
-    // Membaca respons dari OpenRouter
+    // Membaca respons API
     const data = await response.json().catch(() => ({}));
 
-    // Menangani error API
+    // Penanganan error OpenRouter
     if (!response.ok) {
       console.error("OpenRouter Error:", data);
 
       return res.status(response.status).json({
         success: false,
-        message:
-          data.error?.message ||
-          data.message ||
-          "Gagal mendapatkan jawaban dari AI.",
+        message: data.error?.message || "Gagal mendapatkan jawaban dari AI.",
       });
     }
 
@@ -123,16 +126,11 @@ app.post("/api/chat", async (req, res) => {
       reply = content;
     } else if (Array.isArray(content)) {
       reply = content
-        .map((item) => {
-          return typeof item === "string" ? item : item.text || "";
-        })
+        .map((item) => (typeof item === "string" ? item : item.text || ""))
         .join("");
     }
 
-    // Memeriksa apakah AI memberikan jawaban
     if (!reply.trim()) {
-      console.error("Respons AI kosong:", data);
-
       return res.status(502).json({
         success: false,
         message: "AI tidak memberikan jawaban.",
@@ -149,12 +147,17 @@ app.post("/api/chat", async (req, res) => {
 
     return res.status(500).json({
       success: false,
-      message: "Terjadi kesalahan pada server.",
+      message: error.message || "Terjadi kesalahan pada server.",
     });
   }
 });
 
-// Menjalankan server
-app.listen(PORT, () => {
-  console.log(`Server berjalan di http://localhost:${PORT}`);
-});
+// Export untuk Vercel
+module.exports = app;
+
+// Menjalankan server secara lokal
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server berjalan di http://localhost:${PORT}`);
+  });
+}

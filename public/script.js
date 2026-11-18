@@ -10,12 +10,10 @@ const menuButton = document.getElementById("menuButton");
 const closeSidebar = document.getElementById("closeSidebar");
 const sidebarOverlay = document.getElementById("sidebarOverlay");
 
+// Riwayat percakapan
 let conversationHistory = [];
 
-// ===================================
-// MENAMPILKAN PESAN
-// ===================================
-
+// Tampilkan pesan
 function addMessage(text, sender, extraClass = "") {
   const row = document.createElement("div");
 
@@ -33,7 +31,6 @@ function addMessage(text, sender, extraClass = "") {
   bubble.textContent = text;
 
   row.appendChild(bubble);
-
   chatMessages.appendChild(row);
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -41,19 +38,13 @@ function addMessage(text, sender, extraClass = "") {
   return row;
 }
 
-// ===================================
-// MEMBUKA AREA PERCAKAPAN
-// ===================================
-
+// Buka percakapan
 function openConversation() {
   welcomeScreen.hidden = true;
   chatMessages.hidden = false;
 }
 
-// ===================================
-// ANIMASI MENGETIK
-// ===================================
-
+// Animasi mengetik
 function showTyping() {
   const row = document.createElement("div");
 
@@ -66,35 +57,22 @@ function showTyping() {
 
   for (let i = 0; i < 3; i++) {
     const dot = document.createElement("span");
-
     dot.className = "typing-dot";
-
     bubble.appendChild(dot);
   }
 
   row.appendChild(bubble);
-
   chatMessages.appendChild(row);
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// ===================================
-// MENGHILANGKAN ANIMASI MENGETIK
-// ===================================
-
+// Hapus animasi
 function hideTyping() {
-  const typing = document.getElementById("typingIndicator");
-
-  if (typing) {
-    typing.remove();
-  }
+  document.getElementById("typingIndicator")?.remove();
 }
 
-// ===================================
-// MENGIRIM PESAN KE BACKEND
-// ===================================
-
+// Mengirim pesan ke backend
 async function sendMessage(message) {
   conversationHistory.push({
     role: "user",
@@ -107,6 +85,7 @@ async function sendMessage(message) {
 
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
 
       body: JSON.stringify({
@@ -114,7 +93,17 @@ async function sendMessage(message) {
       }),
     });
 
-    const data = await response.json();
+    const raw = await response.text();
+
+    let data;
+
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      throw new Error(
+        "Server tidak mengembalikan JSON. Periksa endpoint API dan deployment.",
+      );
+    }
 
     if (!response.ok) {
       throw new Error(
@@ -123,7 +112,7 @@ async function sendMessage(message) {
     }
 
     if (!data.reply || typeof data.reply !== "string") {
-      throw new Error("Jawaban dari AI tidak ditemukan.");
+      throw new Error("Jawaban AI tidak ditemukan.");
     }
 
     conversationHistory.push({
@@ -134,28 +123,21 @@ async function sendMessage(message) {
     return data.reply;
   } catch (error) {
     conversationHistory.pop();
-
     throw error;
   }
 }
 
-// ===================================
-// PROSES PENGIRIMAN PESAN
-// ===================================
-
+// Proses pengiriman pesan
 async function handleSendMessage(message) {
-  if (!message || sendButton.disabled) {
-    return;
-  }
+  if (!message || sendButton.disabled) return;
 
   openConversation();
 
-  // Tampilkan pesan pengguna
   addMessage(message, "user");
 
   messageInput.value = "";
+  messageInput.style.height = "auto";
 
-  // Nonaktifkan tombol sementara
   sendButton.disabled = true;
   messageInput.disabled = true;
 
@@ -180,15 +162,11 @@ async function handleSendMessage(message) {
   } finally {
     sendButton.disabled = false;
     messageInput.disabled = false;
-
     messageInput.focus();
   }
 }
 
-// ===================================
-// FORM KIRIM PESAN
-// ===================================
-
+// Form kirim pesan
 chatForm.addEventListener("submit", function (event) {
   event.preventDefault();
 
@@ -197,38 +175,26 @@ chatForm.addEventListener("submit", function (event) {
   handleSendMessage(message);
 });
 
-// ===================================
-// ENTER UNTUK MENGIRIM PESAN
-// SHIFT + ENTER UNTUK BARIS BARU
-// ===================================
-
+// Enter untuk mengirim, Shift + Enter untuk baris baru
 messageInput.addEventListener("keydown", function (event) {
   if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
     event.preventDefault();
-
     chatForm.requestSubmit();
   }
 });
 
-// ===================================
-// AUTO RESIZE TEXTAREA
-// ===================================
-
+// Auto resize input
 messageInput.addEventListener("input", function () {
   this.style.height = "auto";
 
   this.style.height = Math.min(this.scrollHeight, 160) + "px";
 });
 
-// ===================================
-// TOMBOL OBROLAN BARU
-// ===================================
-
+// Obrolan baru
 newChatButton.addEventListener("click", function () {
   conversationHistory = [];
 
   chatMessages.innerHTML = "";
-
   chatMessages.hidden = true;
   welcomeScreen.hidden = false;
 
@@ -245,18 +211,12 @@ newChatButton.addEventListener("click", function () {
   messageInput.focus();
 });
 
-// ===================================
-// TOMBOL BUKA SIDEBAR
-// ===================================
-
+// Buka sidebar
 menuButton.addEventListener("click", function () {
   document.body.classList.toggle("sidebar-open");
 });
 
-// ===================================
-// TOMBOL TUTUP SIDEBAR
-// ===================================
-
+// Tutup sidebar
 closeSidebar.addEventListener("click", function () {
   document.body.classList.remove("sidebar-open");
 });
@@ -265,18 +225,14 @@ sidebarOverlay.addEventListener("click", function () {
   document.body.classList.remove("sidebar-open");
 });
 
-// ===================================
-// PERTANYAAN REKOMENDASI
-// ===================================
-
+// Tombol pertanyaan rekomendasi
 document.querySelectorAll(".suggestion-card").forEach((button) => {
   button.addEventListener("click", function () {
     const prompt = this.dataset.prompt;
 
-    if (!prompt) return;
+    if (!prompt || sendButton.disabled) return;
 
     messageInput.value = prompt;
-
     chatForm.requestSubmit();
   });
 });

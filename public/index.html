@@ -13,7 +13,7 @@
 
   <body>
     <div class="app-container">
-      <!-- Sidebar -->
+      <!-- SIDEBAR -->
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
           <div class="brand">
@@ -25,7 +25,6 @@
             class="icon-button close-sidebar"
             id="closeSidebar"
             type="button"
-            aria-label="Tutup menu"
           >
             ×
           </button>
@@ -59,19 +58,14 @@
         </div>
       </aside>
 
-      <!-- Overlay untuk tampilan mobile -->
+      <!-- OVERLAY MOBILE -->
       <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-      <!-- Konten utama -->
+      <!-- KONTEN UTAMA -->
       <main class="main-content">
-        <!-- Navbar -->
+        <!-- NAVBAR -->
         <header class="topbar">
-          <button
-            class="icon-button menu-button"
-            id="menuButton"
-            type="button"
-            aria-label="Buka menu"
-          >
+          <button class="icon-button menu-button" id="menuButton" type="button">
             <svg viewBox="0 0 24 24">
               <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
@@ -79,7 +73,7 @@
 
           <div class="topbar-title">
             <span>Chatbot AI</span>
-            <span class="topbar-version">Nemotron 3 Ultra</span>
+            <span class="topbar-version"> Nemotron 3 Ultra </span>
           </div>
 
           <div class="topbar-right">
@@ -88,9 +82,9 @@
           </div>
         </header>
 
-        <!-- Area chat -->
+        <!-- AREA CHAT -->
         <section class="chat-area" id="chatArea">
-          <!-- Tampilan awal -->
+          <!-- HALAMAN AWAL -->
           <div class="welcome-screen" id="welcomeScreen">
             <div class="welcome-icon">✳</div>
 
@@ -108,7 +102,7 @@
               >
                 <span class="suggestion-icon">✧</span>
                 <strong>Belajar sesuatu</strong>
-                <small>Jelaskan topik yang ingin saya pelajari</small>
+                <small> Jelaskan topik yang ingin saya pelajari </small>
               </button>
 
               <button
@@ -117,7 +111,7 @@
               >
                 <span class="suggestion-icon">⌘</span>
                 <strong>Bantu coding</strong>
-                <small>Buat dan perbaiki kode program</small>
+                <small> Buat dan perbaiki kode program </small>
               </button>
 
               <button
@@ -126,7 +120,7 @@
               >
                 <span class="suggestion-icon">✦</span>
                 <strong>Cari inspirasi</strong>
-                <small>Temukan ide baru dan menarik</small>
+                <small> Temukan ide baru dan menarik </small>
               </button>
 
               <button
@@ -135,16 +129,16 @@
               >
                 <span class="suggestion-icon">▤</span>
                 <strong>Ringkas materi</strong>
-                <small>Pelajari materi dengan lebih mudah</small>
+                <small> Pelajari materi dengan lebih mudah </small>
               </button>
             </div>
           </div>
 
-          <!-- Daftar percakapan -->
+          <!-- PESAN CHAT -->
           <div class="chat-messages" id="chatMessages" hidden></div>
         </section>
 
-        <!-- Input pesan -->
+        <!-- INPUT PESAN -->
         <div class="composer-section">
           <form class="chat-composer" id="chatForm">
             <textarea
