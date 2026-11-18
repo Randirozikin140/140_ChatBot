@@ -138,3 +138,23 @@ app.post("/api/chat", async (req, res) => {
         message: "AI tidak memberikan jawaban.",
       });
     }
+
+    // Mengirim jawaban ke frontend
+    return res.status(200).json({
+      success: true,
+      reply: reply,
+    });
+  } catch (error) {
+    console.error("Server Error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Terjadi kesalahan pada server.",
+    });
+  }
+});
+
+// Menjalankan server
+app.listen(PORT, () => {
+  console.log(`Server berjalan di http://localhost:${PORT}`);
+});
