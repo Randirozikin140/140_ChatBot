@@ -97,3 +97,44 @@ app.post("/api/chat", async (req, res) => {
         }),
       },
     );
+
+    // Membaca respons dari OpenRouter
+    const data = await response.json().catch(() => ({}));
+
+    // Menangani error API
+    if (!response.ok) {
+      console.error("OpenRouter Error:", data);
+
+      return res.status(response.status).json({
+        success: false,
+        message:
+          data.error?.message ||
+          data.message ||
+          "Gagal mendapatkan jawaban dari AI.",
+      });
+    }
+
+    // Mengambil jawaban AI
+    const content = data.choices?.[0]?.message?.content;
+
+    let reply = "";
+
+    if (typeof content === "string") {
+      reply = content;
+    } else if (Array.isArray(content)) {
+      reply = content
+        .map((item) => {
+          return typeof item === "string" ? item : item.text || "";
+        })
+        .join("");
+    }
+
+    // Memeriksa apakah AI memberikan jawaban
+    if (!reply.trim()) {
+      console.error("Respons AI kosong:", data);
+
+      return res.status(502).json({
+        success: false,
+        message: "AI tidak memberikan jawaban.",
+      });
+    }
