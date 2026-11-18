@@ -36,7 +36,9 @@ button {
   display: none !important;
 }
 
-/* LAYOUT */
+/* =========================
+   LAYOUT
+========================= */
 
 .app-container {
   display: flex;
@@ -44,7 +46,9 @@ button {
   height: 100vh;
 }
 
-/* SIDEBAR */
+/* =========================
+   SIDEBAR
+========================= */
 
 .sidebar {
   width: 265px;
@@ -185,7 +189,9 @@ button {
   color: var(--muted);
 }
 
-/* MAIN */
+/* =========================
+   MAIN CONTENT
+========================= */
 
 .main-content {
   display: flex;
@@ -196,7 +202,9 @@ button {
   background: var(--background);
 }
 
-/* NAVBAR */
+/* =========================
+   NAVBAR
+========================= */
 
 .topbar {
   height: 63px;
@@ -257,7 +265,9 @@ button {
   background: #6b9b67;
 }
 
-/* AREA CHAT */
+/* =========================
+   CHAT AREA
+========================= */
 
 .chat-area {
   flex: 1;
@@ -265,6 +275,10 @@ button {
   overflow-y: auto;
   padding: 30px 20px;
 }
+
+/* =========================
+   HALAMAN AWAL
+========================= */
 
 .welcome-screen {
   width: 100%;
@@ -295,7 +309,9 @@ button {
   margin: 0 auto;
 }
 
-/* SARAN PERTANYAAN */
+/* =========================
+   SARAN PERTANYAAN
+========================= */
 
 .suggestion-container {
   display: grid;
@@ -339,7 +355,9 @@ button {
   color: var(--muted);
 }
 
-/* PESAN CHAT */
+/* =========================
+   PESAN CHAT
+========================= */
 
 .chat-messages {
   max-width: 790px;
@@ -394,7 +412,9 @@ button {
   border-radius: 10px;
 }
 
-/* MARKDOWN */
+/* =========================
+   MARKDOWN
+========================= */
 
 .markdown-body {
   font-size: 14px;
@@ -512,7 +532,9 @@ button {
   margin: 18px 0;
 }
 
-/* TYPING */
+/* =========================
+   ANIMASI MENGETIK
+========================= */
 
 .typing-message {
   display: flex;
@@ -549,7 +571,9 @@ button {
   }
 }
 
-/* INPUT */
+/* =========================
+   KOLOM INPUT
+========================= */
 
 .composer-section {
   width: 100%;
@@ -650,7 +674,9 @@ button {
   margin-top: 11px;
 }
 
-/* MOBILE */
+/* =========================
+   MOBILE
+========================= */
 
 .sidebar-overlay {
   display: none;

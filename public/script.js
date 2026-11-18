@@ -10,12 +10,15 @@ const menuButton = document.getElementById("menuButton");
 const closeSidebar = document.getElementById("closeSidebar");
 const sidebarOverlay = document.getElementById("sidebarOverlay");
 
-// Riwayat percakapan
+// ======================================
+// RIWAYAT PERCAKAPAN
+// ======================================
+
 let conversationHistory = [];
 
-// =====================================
-// MENAMPILKAN JAWABAN MARKDOWN
-// =====================================
+// ======================================
+// RENDER MARKDOWN
+// ======================================
 
 function renderAssistantMessage(element, text) {
   if (window.marked && window.DOMPurify) {
@@ -28,14 +31,13 @@ function renderAssistantMessage(element, text) {
 
     element.classList.add("markdown-body");
   } else {
-    // Jika CDN tidak tersedia, tampilkan teks dengan aman.
     element.textContent = text;
   }
 }
 
-// =====================================
+// ======================================
 // MENAMPILKAN PESAN
-// =====================================
+// ======================================
 
 function addMessage(text, sender, extraClass = "") {
   const row = document.createElement("div");
@@ -59,6 +61,7 @@ function addMessage(text, sender, extraClass = "") {
   }
 
   row.appendChild(bubble);
+
   chatMessages.appendChild(row);
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -66,18 +69,18 @@ function addMessage(text, sender, extraClass = "") {
   return row;
 }
 
-// =====================================
-// MEMBUKA AREA PERCAKAPAN
-// =====================================
+// ======================================
+// MEMBUKA PERCAKAPAN
+// ======================================
 
 function openConversation() {
   welcomeScreen.hidden = true;
   chatMessages.hidden = false;
 }
 
-// =====================================
-// ANIMASI MENGETIK
-// =====================================
+// ======================================
+// ANIMASI AI SEDANG MENGETIK
+// ======================================
 
 function showTyping() {
   const row = document.createElement("div");
@@ -98,14 +101,15 @@ function showTyping() {
   }
 
   row.appendChild(bubble);
+
   chatMessages.appendChild(row);
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// =====================================
-// MENGHILANGKAN ANIMASI MENGETIK
-// =====================================
+// ======================================
+// MENGHILANGKAN ANIMASI
+// ======================================
 
 function hideTyping() {
   const typing = document.getElementById("typingIndicator");
@@ -115,9 +119,25 @@ function hideTyping() {
   }
 }
 
-// =====================================
+// ======================================
+// FORMAT PESAN ERROR
+// ======================================
+
+function getErrorText(error) {
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error && typeof error === "object") {
+    return error.message || JSON.stringify(error);
+  }
+
+  return "Terjadi kesalahan pada server.";
+}
+
+// ======================================
 // MENGIRIM PESAN KE BACKEND
-// =====================================
+// ======================================
 
 async function sendMessage(message) {
   conversationHistory.push({
@@ -139,33 +159,32 @@ async function sendMessage(message) {
       }),
     });
 
-    // Membaca respons sebagai teks dahulu
+    // Baca respons sebagai teks
     const raw = await response.text();
 
     let data;
 
+    // Konversi respons menjadi JSON
     try {
       data = JSON.parse(raw);
-    } catch (error) {
+    } catch {
       throw new Error(
-        "Server tidak mengembalikan JSON. " +
-          "Pastikan endpoint /api/chat aktif dan deployment terbaru sudah terpasang.",
+        "Server tidak memberikan JSON. " +
+          "Periksa endpoint API dan deployment.",
       );
     }
 
-    // Memeriksa status response
-    if (!response.ok) {
-      throw new Error(
-        data.message || data.error || "Terjadi kesalahan pada server.",
-      );
+    // Periksa status respons
+    if (!response.ok || data.success === false) {
+      throw new Error(getErrorText(data.message || data.error));
     }
 
-    // Memastikan AI memberikan jawaban
+    // Periksa jawaban AI
     if (!data.reply || typeof data.reply !== "string") {
-      throw new Error("Jawaban AI tidak ditemukan.");
+      throw new Error("AI tidak memberikan jawaban.");
     }
 
-    // Simpan jawaban ke riwayat
+    // Simpan jawaban AI ke riwayat
     conversationHistory.push({
       role: "assistant",
       content: data.reply,
@@ -173,7 +192,7 @@ async function sendMessage(message) {
 
     return data.reply;
   } catch (error) {
-    // Hapus pesan user yang gagal diproses
+    // Hapus pesan pengguna yang gagal dikirim
     if (
       conversationHistory.length > 0 &&
       conversationHistory[conversationHistory.length - 1].role === "user"
@@ -185,46 +204,49 @@ async function sendMessage(message) {
   }
 }
 
-// =====================================
+// ======================================
 // PROSES PENGIRIMAN PESAN
-// =====================================
+// ======================================
 
 async function handleSendMessage(message) {
   if (!message || sendButton.disabled) {
     return;
   }
 
+  // Buka area chat
   openConversation();
 
   // Tampilkan pesan pengguna
   addMessage(message, "user");
 
-  // Kosongkan kolom input
+  // Kosongkan input
   messageInput.value = "";
+
   messageInput.style.height = "auto";
 
   // Nonaktifkan input sementara
   sendButton.disabled = true;
   messageInput.disabled = true;
 
-  // Tampilkan animasi mengetik
+  // Tampilkan animasi
   showTyping();
 
   try {
+    // Minta jawaban AI
     const reply = await sendMessage(message);
 
     hideTyping();
 
-    // Tampilkan jawaban AI
+    // Tampilkan jawaban
     addMessage(reply, "assistant");
   } catch (error) {
     hideTyping();
 
     console.error("Chatbot Error:", error);
 
-    // Pesan error utama tetap dipertahankan
+    // Pesan error tetap menggunakan awalan ini
     addMessage(
-      "Maaf, terjadi kesalahan. " + error.message,
+      "Maaf, terjadi kesalahan. " + getErrorText(error),
       "assistant",
       "error-message",
     );
@@ -237,9 +259,9 @@ async function handleSendMessage(message) {
   }
 }
 
-// =====================================
+// ======================================
 // FORM KIRIM PESAN
-// =====================================
+// ======================================
 
 chatForm.addEventListener("submit", function (event) {
   event.preventDefault();
@@ -249,10 +271,10 @@ chatForm.addEventListener("submit", function (event) {
   handleSendMessage(message);
 });
 
-// =====================================
+// ======================================
 // ENTER UNTUK KIRIM PESAN
 // SHIFT + ENTER UNTUK BARIS BARU
-// =====================================
+// ======================================
 
 messageInput.addEventListener("keydown", function (event) {
   if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
@@ -262,9 +284,9 @@ messageInput.addEventListener("keydown", function (event) {
   }
 });
 
-// =====================================
+// ======================================
 // AUTO RESIZE TEXTAREA
-// =====================================
+// ======================================
 
 messageInput.addEventListener("input", function () {
   this.style.height = "auto";
@@ -272,18 +294,22 @@ messageInput.addEventListener("input", function () {
   this.style.height = Math.min(this.scrollHeight, 160) + "px";
 });
 
-// =====================================
-// OBROLAN BARU
-// =====================================
+// ======================================
+// TOMBOL OBROLAN BARU
+// ======================================
 
 newChatButton.addEventListener("click", function () {
+  // Kosongkan riwayat
   conversationHistory = [];
 
+  // Kosongkan percakapan
   chatMessages.innerHTML = "";
 
+  // Kembali ke halaman awal
   chatMessages.hidden = true;
   welcomeScreen.hidden = false;
 
+  // Reset input
   messageInput.value = "";
   messageInput.style.height = "auto";
 
@@ -292,22 +318,23 @@ newChatButton.addEventListener("click", function () {
 
   hideTyping();
 
+  // Tutup sidebar
   document.body.classList.remove("sidebar-open");
 
   messageInput.focus();
 });
 
-// =====================================
+// ======================================
 // MEMBUKA SIDEBAR
-// =====================================
+// ======================================
 
 menuButton.addEventListener("click", function () {
   document.body.classList.toggle("sidebar-open");
 });
 
-// =====================================
+// ======================================
 // MENUTUP SIDEBAR
-// =====================================
+// ======================================
 
 closeSidebar.addEventListener("click", function () {
   document.body.classList.remove("sidebar-open");
@@ -317,9 +344,9 @@ sidebarOverlay.addEventListener("click", function () {
   document.body.classList.remove("sidebar-open");
 });
 
-// =====================================
+// ======================================
 // PERTANYAAN REKOMENDASI
-// =====================================
+// ======================================
 
 document.querySelectorAll(".suggestion-card").forEach((button) => {
   button.addEventListener("click", function () {

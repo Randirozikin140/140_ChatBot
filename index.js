@@ -12,23 +12,22 @@ app.disable("x-powered-by");
 
 app.use(express.json({ limit: "1mb" }));
 
-// Menampilkan file public saat dijalankan secara lokal.
-// Pada Vercel, file public disajikan melalui CDN.
+// File frontend untuk localhost
 if (!process.env.VERCEL) {
   app.use(express.static(publicPath));
 }
 
-// =====================================
+// ======================================
 // HALAMAN UTAMA
-// =====================================
+// ======================================
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(publicPath, "index.html"));
 });
 
-// =====================================
+// ======================================
 // CEK SERVER
-// =====================================
+// ======================================
 
 app.get("/api/health", (req, res) => {
   res.json({
@@ -37,9 +36,9 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-// =====================================
-// CEK API CHAT
-// =====================================
+// ======================================
+// CEK API
+// ======================================
 
 app.get("/api/chat", (req, res) => {
   res.json({
@@ -48,15 +47,33 @@ app.get("/api/chat", (req, res) => {
   });
 });
 
-// =====================================
+// ======================================
+// FORMAT PESAN ERROR
+// ======================================
+
+function getErrorMessage(data) {
+  const error = data?.error || data?.message;
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  if (error && typeof error === "object") {
+    return error.message || JSON.stringify(error);
+  }
+
+  return "Layanan AI gagal memberikan jawaban.";
+}
+
+// ======================================
 // API CHATBOT
-// =====================================
+// ======================================
 
 app.post("/api/chat", async (req, res) => {
   try {
     const messages = req.body?.message;
 
-    // Validasi array pesan
+    // Validasi pesan
     if (
       !Array.isArray(messages) ||
       messages.length === 0 ||
@@ -68,15 +85,14 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    // Validasi isi pesan
-    const validMessages = messages.every((item) => {
-      return (
+    // Validasi setiap pesan
+    const validMessages = messages.every(
+      (item) =>
         item &&
         ["user", "assistant"].includes(item.role) &&
         typeof item.content === "string" &&
-        item.content.trim().length > 0
-      );
-    });
+        item.content.trim().length > 0,
+    );
 
     if (!validMessages) {
       return res.status(400).json({
@@ -85,7 +101,7 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    // Mengambil API Key
+    // API Key OpenRouter
     const apiKey = process.env.OPENROUTER_API_KEY;
 
     if (!apiKey) {
@@ -95,12 +111,13 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    // Mengambil model dari environment
-    // Tetap menggunakan model yang sebelumnya dipakai.
+    // Model NVIDIA Nemotron
     const model =
-      process.env.OPENROUTER_MODEL || "nvidia/neutron-3.5-super-v1:free";
+      process.env.OPENROUTER_MODEL || "nvidia/nemotron-3-ultra-550b-a55b:free";
 
-    // Menghubungkan ke OpenRouter
+    console.log("Menggunakan model:", model);
+
+    // Request ke OpenRouter
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -119,12 +136,13 @@ app.post("/api/chat", async (req, res) => {
             {
               role: "system",
               content:
-                "Kamu adalah Chatbot AI yang ramah, cerdas, " +
-                "dan membantu. Jawablah menggunakan bahasa " +
-                "Indonesia yang mudah dipahami. Gunakan " +
-                "format Markdown yang rapi seperti heading, " +
-                "teks tebal, daftar, tabel, dan blok kode " +
-                "jika diperlukan. Jawab sesuai pertanyaan.",
+                "Kamu adalah Chatbot AI yang ramah, " +
+                "cerdas, dan membantu. " +
+                "Gunakan bahasa Indonesia yang mudah dipahami. " +
+                "Jawablah semua pertanyaan secara jelas, " +
+                "sopan, dan informatif. " +
+                "Gunakan Markdown untuk membuat jawaban " +
+                "lebih terstruktur jika diperlukan.",
             },
             ...messages,
           ],
@@ -133,10 +151,12 @@ app.post("/api/chat", async (req, res) => {
           max_tokens: 2000,
           stream: false,
         }),
+
+        signal: AbortSignal.timeout(55000),
       },
     );
 
-    // Membaca respons OpenRouter
+    // Baca respons sebagai teks
     const raw = await response.text();
 
     let data;
@@ -144,31 +164,25 @@ app.post("/api/chat", async (req, res) => {
     try {
       data = JSON.parse(raw);
     } catch (error) {
-      console.error("Respons OpenRouter bukan JSON:", raw);
+      console.error("Respons API tidak valid:", raw);
 
       return res.status(502).json({
         success: false,
-        message: "Respons dari layanan AI tidak valid.",
+        message: "Respons dari OpenRouter tidak valid.",
       });
     }
 
-    // Menangani error dari OpenRouter
+    // Tangani error dari OpenRouter
     if (!response.ok) {
-      console.error("OpenRouter Error:", data);
+      console.error("OpenRouter Error:", {
+        status: response.status,
+        details: data,
+      });
 
-      return res
-        .status(
-          response.status >= 400 && response.status <= 599
-            ? response.status
-            : 502,
-        )
-        .json({
-          success: false,
-          message:
-            data.error?.message ||
-            data.message ||
-            "Gagal mendapatkan jawaban dari AI.",
-        });
+      return res.status(response.status).json({
+        success: false,
+        message: getErrorMessage(data),
+      });
     }
 
     // Mengambil jawaban AI
@@ -180,13 +194,11 @@ app.post("/api/chat", async (req, res) => {
       reply = content;
     } else if (Array.isArray(content)) {
       reply = content
-        .map((item) => {
-          return typeof item === "string" ? item : item.text || "";
-        })
+        .map((item) => (typeof item === "string" ? item : item.text || ""))
         .join("");
     }
 
-    // Memeriksa jawaban AI
+    // Periksa jawaban AI
     if (!reply.trim()) {
       console.error("Jawaban AI kosong:", data);
 
@@ -196,7 +208,7 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
-    // Mengirim jawaban ke frontend
+    // Kirim jawaban ke frontend
     return res.status(200).json({
       success: true,
       reply: reply,
@@ -206,12 +218,9 @@ app.post("/api/chat", async (req, res) => {
 
     let errorMessage = "Terjadi kesalahan pada server.";
 
-    if (error.name === "AbortError" || error.name === "TimeoutError") {
+    if (error.name === "TimeoutError" || error.name === "AbortError") {
       errorMessage = "Koneksi ke layanan AI mengalami timeout.";
-    } else if (
-      error.cause?.code === "ECONNREFUSED" ||
-      error.cause?.code === "ENOTFOUND"
-    ) {
+    } else if (error.cause?.code === "ENOTFOUND") {
       errorMessage = "Tidak dapat terhubung ke layanan AI.";
     }
 
@@ -222,9 +231,9 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
-// =====================================
-// ERROR ROUTE API
-// =====================================
+// ======================================
+// API TIDAK DITEMUKAN
+// ======================================
 
 app.use("/api", (req, res) => {
   res.status(404).json({
@@ -233,9 +242,9 @@ app.use("/api", (req, res) => {
   });
 });
 
-// =====================================
+// ======================================
 // GLOBAL ERROR HANDLER
-// =====================================
+// ======================================
 
 app.use((error, req, res, next) => {
   console.error("Global Error:", error);
@@ -244,9 +253,7 @@ app.use((error, req, res, next) => {
     return next(error);
   }
 
-  const status = error.status || (error instanceof SyntaxError ? 400 : 500);
-
-  res.status(status).json({
+  res.status(error.status || (error instanceof SyntaxError ? 400 : 500)).json({
     success: false,
     message:
       error instanceof SyntaxError
@@ -255,15 +262,15 @@ app.use((error, req, res, next) => {
   });
 });
 
-// =====================================
+// ======================================
 // EXPORT UNTUK VERCEL
-// =====================================
+// ======================================
 
 module.exports = app;
 
-// =====================================
-// MENJALANKAN SERVER LOKAL
-// =====================================
+// ======================================
+// JALANKAN SERVER LOKAL
+// ======================================
 
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {

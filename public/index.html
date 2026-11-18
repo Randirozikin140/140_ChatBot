@@ -2,14 +2,16 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <meta name="theme-color" content="#f8f7f2" />
 
     <title>Chatbot AI</title>
 
     <link rel="stylesheet" href="/style.css" />
 
-    <!-- Markdown Renderer -->
+    <!-- Library Markdown -->
     <script
       defer
       src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"
@@ -27,7 +29,8 @@
 
   <body>
     <div class="app-container">
-      <!-- SIDEBAR -->
+      <!-- ================= SIDEBAR ================= -->
+
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
           <div class="brand">
@@ -45,10 +48,14 @@
           </button>
         </div>
 
+        <!-- Tombol Obrolan Baru -->
+
         <button class="new-chat-button" id="newChatButton" type="button">
           <span>＋</span>
           <span>Obrolan baru</span>
         </button>
+
+        <!-- Menu Sidebar -->
 
         <div class="sidebar-section">
           <p class="sidebar-label">RUANG KERJA</p>
@@ -59,26 +66,32 @@
           </div>
         </div>
 
+        <!-- Profil -->
+
         <div class="sidebar-bottom">
           <div class="profile">
             <div class="profile-avatar">U</div>
 
             <div class="profile-info">
               <strong>Pengguna</strong>
+
               <span>Chatbot AI</span>
             </div>
 
-            <span class="profile-menu">•••</span>
+            <span class="profile-menu"> ••• </span>
           </div>
         </div>
       </aside>
 
-      <!-- OVERLAY MOBILE -->
+      <!-- Overlay Mobile -->
+
       <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-      <!-- KONTEN UTAMA -->
+      <!-- ================= MAIN CONTENT ================= -->
+
       <main class="main-content">
-        <!-- NAVBAR -->
+        <!-- Navbar -->
+
         <header class="topbar">
           <button
             class="icon-button menu-button"
@@ -99,13 +112,16 @@
 
           <div class="topbar-right">
             <span class="status-dot"></span>
+
             <span>Online</span>
           </div>
         </header>
 
-        <!-- AREA CHAT -->
+        <!-- ================= AREA CHAT ================= -->
+
         <section class="chat-area" id="chatArea">
-          <!-- HALAMAN AWAL -->
+          <!-- Halaman Awal -->
+
           <div class="welcome-screen" id="welcomeScreen">
             <div class="welcome-icon">✳</div>
 
@@ -116,14 +132,16 @@
               ide baru.
             </p>
 
+            <!-- Pilihan Pertanyaan -->
+
             <div class="suggestion-container">
               <button
                 class="suggestion-card"
                 data-prompt="Jelaskan apa itu kecerdasan buatan."
               >
-                <span class="suggestion-icon">✧</span>
+                <span class="suggestion-icon"> ✧ </span>
 
-                <strong>Belajar sesuatu</strong>
+                <strong> Belajar sesuatu </strong>
 
                 <small> Jelaskan topik yang ingin saya pelajari </small>
               </button>
@@ -132,9 +150,9 @@
                 class="suggestion-card"
                 data-prompt="Bantu saya membuat program sederhana menggunakan JavaScript."
               >
-                <span class="suggestion-icon">⌘</span>
+                <span class="suggestion-icon"> ⌘ </span>
 
-                <strong>Bantu coding</strong>
+                <strong> Bantu coding </strong>
 
                 <small> Buat dan perbaiki kode program </small>
               </button>
@@ -143,9 +161,9 @@
                 class="suggestion-card"
                 data-prompt="Berikan ide kreatif untuk tugas kuliah saya."
               >
-                <span class="suggestion-icon">✦</span>
+                <span class="suggestion-icon"> ✦ </span>
 
-                <strong>Cari inspirasi</strong>
+                <strong> Cari inspirasi </strong>
 
                 <small> Temukan ide baru dan menarik </small>
               </button>
@@ -154,20 +172,22 @@
                 class="suggestion-card"
                 data-prompt="Bantu saya merangkum materi kuliah."
               >
-                <span class="suggestion-icon">▤</span>
+                <span class="suggestion-icon"> ▤ </span>
 
-                <strong>Ringkas materi</strong>
+                <strong> Ringkas materi </strong>
 
                 <small> Pelajari materi dengan lebih mudah </small>
               </button>
             </div>
           </div>
 
-          <!-- PESAN CHAT -->
+          <!-- Area Percakapan -->
+
           <div class="chat-messages" id="chatMessages" hidden></div>
         </section>
 
-        <!-- INPUT PESAN -->
+        <!-- ================= INPUT PESAN ================= -->
+
         <div class="composer-section">
           <form class="chat-composer" id="chatForm">
             <textarea
@@ -181,7 +201,8 @@
 
             <div class="composer-bottom">
               <span class="composer-hint">
-                <span class="hint-icon">✧</span>
+                <span class="hint-icon"> ✧ </span>
+
                 AI Assistant
               </span>
 
