@@ -8,7 +8,21 @@
     <title>Chatbot AI</title>
 
     <link rel="stylesheet" href="/style.css" />
-    <script src="/script.js" defer></script>
+
+    <!-- Markdown Renderer -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/marked@15.0.7/marked.min.js"
+    ></script>
+
+    <!-- Pengaman HTML -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"
+    ></script>
+
+    <!-- JavaScript Chatbot -->
+    <script defer src="/script.js"></script>
   </head>
 
   <body>
@@ -25,6 +39,7 @@
             class="icon-button close-sidebar"
             id="closeSidebar"
             type="button"
+            aria-label="Tutup sidebar"
           >
             ×
           </button>
@@ -65,7 +80,12 @@
       <main class="main-content">
         <!-- NAVBAR -->
         <header class="topbar">
-          <button class="icon-button menu-button" id="menuButton" type="button">
+          <button
+            class="icon-button menu-button"
+            id="menuButton"
+            type="button"
+            aria-label="Buka sidebar"
+          >
             <svg viewBox="0 0 24 24">
               <path d="M4 7h16M4 12h16M4 17h16" />
             </svg>
@@ -73,6 +93,7 @@
 
           <div class="topbar-title">
             <span>Chatbot AI</span>
+
             <span class="topbar-version"> Nemotron 3 Ultra </span>
           </div>
 
@@ -101,7 +122,9 @@
                 data-prompt="Jelaskan apa itu kecerdasan buatan."
               >
                 <span class="suggestion-icon">✧</span>
+
                 <strong>Belajar sesuatu</strong>
+
                 <small> Jelaskan topik yang ingin saya pelajari </small>
               </button>
 
@@ -110,7 +133,9 @@
                 data-prompt="Bantu saya membuat program sederhana menggunakan JavaScript."
               >
                 <span class="suggestion-icon">⌘</span>
+
                 <strong>Bantu coding</strong>
+
                 <small> Buat dan perbaiki kode program </small>
               </button>
 
@@ -119,16 +144,20 @@
                 data-prompt="Berikan ide kreatif untuk tugas kuliah saya."
               >
                 <span class="suggestion-icon">✦</span>
+
                 <strong>Cari inspirasi</strong>
+
                 <small> Temukan ide baru dan menarik </small>
               </button>
 
               <button
                 class="suggestion-card"
-                data-prompt="Bantu saya merangkum sebuah materi kuliah."
+                data-prompt="Bantu saya merangkum materi kuliah."
               >
                 <span class="suggestion-icon">▤</span>
+
                 <strong>Ringkas materi</strong>
+
                 <small> Pelajari materi dengan lebih mudah </small>
               </button>
             </div>
@@ -147,7 +176,8 @@
               rows="1"
               maxlength="2000"
               required
-            ></textarea>
+            >
+            </textarea>
 
             <div class="composer-bottom">
               <span class="composer-hint">

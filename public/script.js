@@ -13,7 +13,30 @@ const sidebarOverlay = document.getElementById("sidebarOverlay");
 // Riwayat percakapan
 let conversationHistory = [];
 
-// Tampilkan pesan
+// =====================================
+// MENAMPILKAN JAWABAN MARKDOWN
+// =====================================
+
+function renderAssistantMessage(element, text) {
+  if (window.marked && window.DOMPurify) {
+    const html = window.marked.parse(text, {
+      breaks: true,
+      gfm: true,
+    });
+
+    element.innerHTML = window.DOMPurify.sanitize(html);
+
+    element.classList.add("markdown-body");
+  } else {
+    // Jika CDN tidak tersedia, tampilkan teks dengan aman.
+    element.textContent = text;
+  }
+}
+
+// =====================================
+// MENAMPILKAN PESAN
+// =====================================
+
 function addMessage(text, sender, extraClass = "") {
   const row = document.createElement("div");
 
@@ -23,12 +46,17 @@ function addMessage(text, sender, extraClass = "") {
   const bubble = document.createElement("div");
 
   bubble.className =
-    "message " +
-    (sender === "user" ? "user-message" : "assistant-message") +
-    " " +
-    extraClass;
+    "message " + (sender === "user" ? "user-message" : "assistant-message");
 
-  bubble.textContent = text;
+  if (extraClass) {
+    bubble.classList.add(extraClass);
+  }
+
+  if (sender === "assistant" && !extraClass) {
+    renderAssistantMessage(bubble, text);
+  } else {
+    bubble.textContent = text;
+  }
 
   row.appendChild(bubble);
   chatMessages.appendChild(row);
@@ -38,13 +66,19 @@ function addMessage(text, sender, extraClass = "") {
   return row;
 }
 
-// Buka percakapan
+// =====================================
+// MEMBUKA AREA PERCAKAPAN
+// =====================================
+
 function openConversation() {
   welcomeScreen.hidden = true;
   chatMessages.hidden = false;
 }
 
-// Animasi mengetik
+// =====================================
+// ANIMASI MENGETIK
+// =====================================
+
 function showTyping() {
   const row = document.createElement("div");
 
@@ -57,7 +91,9 @@ function showTyping() {
 
   for (let i = 0; i < 3; i++) {
     const dot = document.createElement("span");
+
     dot.className = "typing-dot";
+
     bubble.appendChild(dot);
   }
 
@@ -67,12 +103,22 @@ function showTyping() {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Hapus animasi
+// =====================================
+// MENGHILANGKAN ANIMASI MENGETIK
+// =====================================
+
 function hideTyping() {
-  document.getElementById("typingIndicator")?.remove();
+  const typing = document.getElementById("typingIndicator");
+
+  if (typing) {
+    typing.remove();
+  }
 }
 
-// Mengirim pesan ke backend
+// =====================================
+// MENGIRIM PESAN KE BACKEND
+// =====================================
+
 async function sendMessage(message) {
   conversationHistory.push({
     role: "user",
@@ -93,28 +139,33 @@ async function sendMessage(message) {
       }),
     });
 
+    // Membaca respons sebagai teks dahulu
     const raw = await response.text();
 
     let data;
 
     try {
       data = JSON.parse(raw);
-    } catch {
+    } catch (error) {
       throw new Error(
-        "Server tidak mengembalikan JSON. Periksa endpoint API dan deployment.",
+        "Server tidak mengembalikan JSON. " +
+          "Pastikan endpoint /api/chat aktif dan deployment terbaru sudah terpasang.",
       );
     }
 
+    // Memeriksa status response
     if (!response.ok) {
       throw new Error(
         data.message || data.error || "Terjadi kesalahan pada server.",
       );
     }
 
+    // Memastikan AI memberikan jawaban
     if (!data.reply || typeof data.reply !== "string") {
       throw new Error("Jawaban AI tidak ditemukan.");
     }
 
+    // Simpan jawaban ke riwayat
     conversationHistory.push({
       role: "assistant",
       content: data.reply,
@@ -122,25 +173,41 @@ async function sendMessage(message) {
 
     return data.reply;
   } catch (error) {
-    conversationHistory.pop();
+    // Hapus pesan user yang gagal diproses
+    if (
+      conversationHistory.length > 0 &&
+      conversationHistory[conversationHistory.length - 1].role === "user"
+    ) {
+      conversationHistory.pop();
+    }
+
     throw error;
   }
 }
 
-// Proses pengiriman pesan
+// =====================================
+// PROSES PENGIRIMAN PESAN
+// =====================================
+
 async function handleSendMessage(message) {
-  if (!message || sendButton.disabled) return;
+  if (!message || sendButton.disabled) {
+    return;
+  }
 
   openConversation();
 
+  // Tampilkan pesan pengguna
   addMessage(message, "user");
 
+  // Kosongkan kolom input
   messageInput.value = "";
   messageInput.style.height = "auto";
 
+  // Nonaktifkan input sementara
   sendButton.disabled = true;
   messageInput.disabled = true;
 
+  // Tampilkan animasi mengetik
   showTyping();
 
   try {
@@ -148,25 +215,32 @@ async function handleSendMessage(message) {
 
     hideTyping();
 
+    // Tampilkan jawaban AI
     addMessage(reply, "assistant");
   } catch (error) {
     hideTyping();
 
     console.error("Chatbot Error:", error);
 
+    // Pesan error utama tetap dipertahankan
     addMessage(
       "Maaf, terjadi kesalahan. " + error.message,
       "assistant",
       "error-message",
     );
   } finally {
+    // Aktifkan kembali input
     sendButton.disabled = false;
     messageInput.disabled = false;
+
     messageInput.focus();
   }
 }
 
-// Form kirim pesan
+// =====================================
+// FORM KIRIM PESAN
+// =====================================
+
 chatForm.addEventListener("submit", function (event) {
   event.preventDefault();
 
@@ -175,26 +249,38 @@ chatForm.addEventListener("submit", function (event) {
   handleSendMessage(message);
 });
 
-// Enter untuk mengirim, Shift + Enter untuk baris baru
+// =====================================
+// ENTER UNTUK KIRIM PESAN
+// SHIFT + ENTER UNTUK BARIS BARU
+// =====================================
+
 messageInput.addEventListener("keydown", function (event) {
   if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
     event.preventDefault();
+
     chatForm.requestSubmit();
   }
 });
 
-// Auto resize input
+// =====================================
+// AUTO RESIZE TEXTAREA
+// =====================================
+
 messageInput.addEventListener("input", function () {
   this.style.height = "auto";
 
   this.style.height = Math.min(this.scrollHeight, 160) + "px";
 });
 
-// Obrolan baru
+// =====================================
+// OBROLAN BARU
+// =====================================
+
 newChatButton.addEventListener("click", function () {
   conversationHistory = [];
 
   chatMessages.innerHTML = "";
+
   chatMessages.hidden = true;
   welcomeScreen.hidden = false;
 
@@ -211,12 +297,18 @@ newChatButton.addEventListener("click", function () {
   messageInput.focus();
 });
 
-// Buka sidebar
+// =====================================
+// MEMBUKA SIDEBAR
+// =====================================
+
 menuButton.addEventListener("click", function () {
   document.body.classList.toggle("sidebar-open");
 });
 
-// Tutup sidebar
+// =====================================
+// MENUTUP SIDEBAR
+// =====================================
+
 closeSidebar.addEventListener("click", function () {
   document.body.classList.remove("sidebar-open");
 });
@@ -225,14 +317,20 @@ sidebarOverlay.addEventListener("click", function () {
   document.body.classList.remove("sidebar-open");
 });
 
-// Tombol pertanyaan rekomendasi
+// =====================================
+// PERTANYAAN REKOMENDASI
+// =====================================
+
 document.querySelectorAll(".suggestion-card").forEach((button) => {
   button.addEventListener("click", function () {
     const prompt = this.dataset.prompt;
 
-    if (!prompt || sendButton.disabled) return;
+    if (!prompt || sendButton.disabled) {
+      return;
+    }
 
     messageInput.value = prompt;
+
     chatForm.requestSubmit();
   });
 });
